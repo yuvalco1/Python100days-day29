@@ -1,7 +1,9 @@
+import json
 import random
 from tkinter import Tk, Canvas, PhotoImage, Label, Entry, Button
 from tkinter import messagebox
 import pyperclip
+
 
 # ---------------------------- PASSWORD GENERATOR ------------------------------- #
 
@@ -37,7 +39,7 @@ def generate_password():
     # for char in password_list:
     #   password += char
 
-    #print(f"Your password is: {password}")
+    # print(f"Your password is: {password}")
     password_entry.delete(0, "end")
     password_entry.insert(0, password)
 
@@ -45,23 +47,69 @@ def generate_password():
     pyperclip.copy(password)
 
 
-
 # ---------------------------- SAVE PASSWORD ------------------------------- #
 def save():
-    is_ok = messagebox.askokcancel(title=website_entry.get(),
-                                   message=f"These are the details entered: \nEmail: {email_entry.get()}\nPassword: {password_entry.get()}\nIs it ok to save?")
-    if len(website_entry.get()) == 0 or len(password_entry.get()) == 0:
+    website = website_entry.get()
+    email = email_entry.get()
+    password = password_entry.get()
+    new_data = {website: {"email": email, "password": password}}
+
+    is_ok = messagebox.askokcancel(title=website,
+                                   message=f"These are the details entered: \nEmail: {email}\nPassword: {password}\nIs it ok to save?")
+    if len(website) == 0 or len(password) == 0:
         messagebox.showinfo(title="Oops", message="Please make sure you haven't left any fields empty.")
     else:
         if is_ok:
-            with open("data.txt", "a") as file:
-                file.write(f"{website_entry.get()} | {email_entry.get()} | {password_entry.get()}\n")
-                website_entry.delete(0, "end")
-                password_entry.delete(0, "end")
+            try:
+                with open("data.json", "r") as file:
+                    # Reading old data
+                    data = json.load(file)
+
+            except FileNotFoundError:
+                data = {}
+            finally:
+                # updating old data with new data
+                data.update(new_data)
+                with open("data.json", "w") as file:
+                    # saving all data
+                    json.dump(data, file, indent=4)
+            website_entry.delete(0, "end")
+            password_entry.delete(0, "end")
         else:
             messagebox.showinfo(title="Oops", message="Please make sure you haven't left any fields empty.")
             website_entry.delete(0, "end")
             password_entry.delete(0, "end")
+
+
+# ---------------------------- SEARCH   ------------------------------- #
+def search():
+    website = website_entry.get()
+    if website == "":
+        print("Please add website name to search")
+        messagebox.showinfo(title="Oops", message="Please add website name to search")
+
+    else:
+        try:
+            with open("data.json", "r") as file:
+                # Reading old data
+                data = json.load(file)
+        except FileNotFoundError:
+            print("Password file does not exist, try save password before searching")
+            messagebox.showinfo(title="Oops", message="Password file does not exist, try save password before searching")
+
+        else:
+            try:
+                website_data = data[website]
+            except KeyError:
+                print("we could not find this website in the vault")
+                messagebox.showinfo(title="Oops", message="we could not find this website in the vault")
+
+            else:
+                print(website, website_data)
+                messagebox.showinfo(title=website, message=f"email: {website_data['email']}\nPassword: {website_data['password']}")
+
+
+
 
 
 # ---------------------------- UI SETUP ------------------------------- #
@@ -90,8 +138,8 @@ password_label = Label(text="Password:", bg="white", fg="black", font=("Arial", 
 password_label.grid(column=0, row=3, padx=(20, 0))
 
 # website entry
-website_entry = Entry(width=35, bg="white", fg="black", font=("Arial", 14, "normal"))
-website_entry.grid(column=1, row=1, columnspan=2, padx=(0, 20))
+website_entry = Entry(width=25, bg="white", fg="black", font=("Arial", 14, "normal"))
+website_entry.grid(column=1, row=1, columnspan=1, padx=(0, 20))
 website_entry.focus()
 
 # email/username entry
@@ -111,5 +159,10 @@ generate_password_btn.grid(column=2, row=3, padx=(20, 20))
 # add button
 add_btn = Button(width=36, text="Add", command=save, bg="white", fg="black", font=("Arial", 14, "normal"))
 add_btn.grid(column=1, row=4, columnspan=2, padx=(0, 20))
+
+# Search Button
+search_btn = Button(text="Search", width=15, command=search, bg="white", fg="black",
+                    font=("Arial", 14, "normal"))
+search_btn.grid(column=2, row=1, padx=(20, 20))
 
 window.mainloop()
