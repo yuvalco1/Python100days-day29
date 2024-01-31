@@ -106,8 +106,9 @@ def search():
 
             else:
                 print(website, website_data)
-                messagebox.showinfo(title=website, message=f"email: {website_data['email']}\nPassword: {website_data['password']}")
-
+                messagebox.showinfo(title=website, message=f"Found password !!\nemail: {website_data['email']}\nPassword: {website_data['password']}")
+                password_entry.insert(0, website_data['password'])
+                pyperclip.copy(website_data['password'])
 
 
 
